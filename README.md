@@ -21,12 +21,12 @@ Customer Query -> NLP -> ML -> DistilBERT -> Confidence -> Priority -> Escalatio
 - SQL
 
 # Main Phases:
-# 1. Data preparation & NLP
-     validation, missing/duplicate checks, category imbalance, text analysis, and preprocessing.
+# 1. Data preparation & NLP 
+   - validation, missing/duplicate checks, category imbalance, text analysis, and preprocessing.
 # 2. Machine Learning Baseline
-     Linear SVM + TF-IDF
-     Random Forest + TF-IDF
-     XGBoost + TF-IDF
+    - Linear SVM + TF-IDF
+    - Random Forest + TF-IDF
+    - XGBoost + TF-IDF
   compared these models using classification metrics such as Accuracy, Precision, Recall, Weighted F1-score, and Confusion Matrix, and then used the comparison to identify the appropriate baseline model.
 # 3. Deep Learning 
      DistilBERT is fine-tuned for banking intent classification with confidence and error analysis.

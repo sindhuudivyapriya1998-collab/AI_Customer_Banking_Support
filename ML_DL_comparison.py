@@ -20,7 +20,7 @@ from transformers import (AutoTokenizer, AutoModelForSequenceClassification)
 # =========================================================================================================================================
 
 print("\nLoading test data...")
-test_data = pd.read_csv(r"\Users\DIVYA PRIYA\Downloads\FInal_project1_AI_Banking\Data\Raw\test.csv")
+test_data = pd.read_csv("test_cleaned.csv")
 X_test = test_data["text"].astype(str)
 y_test = test_data["category"].astype(str)
 
@@ -35,6 +35,9 @@ test["text"] = test["text"].str.replace(r"\s+", " ",regex=True).str.strip()
 ml_model = joblib.load("ml_baseline_model.pkl")
 tfidf = joblib.load("tfidf_vectorizer.pkl") 
 print("Model is loaded")
+
+print("Model type:",type(ml_model))
+print("Vectorizer type:",type(tfidf))
 
 # ml_predictions
 X_test_tfidf = tfidf.transform(X_test)

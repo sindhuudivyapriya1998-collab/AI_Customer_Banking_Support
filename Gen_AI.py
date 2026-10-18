@@ -2,6 +2,7 @@ import os
 import time
 import csv
 import pandas as pd
+import numpy as np
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -20,18 +21,23 @@ print("Model:", model_name)
 #=======================================================================================================================
 # Load deep learning predictions
 #==========================================================================================================================
-dl_predictions=pd.read_csv("DL_predictions.csv")
-selected_index=1
+import joblib 
+svm_model = joblib.load("calibrated_svm_model.pkl")
+tfidf = joblib.load("tfidf_vectorizer.pkl")
 
-customer_query = dl_predictions.loc[selected_index,"text"]
-predicted_category = dl_predictions.loc[selected_index,"predicted_category"]
-model_confidence = dl_predictions.loc[selected_index,"confidence"]
+customer_query = input("Enter customer banking query:")
 
-print("\nDeep Learning Prediction")
+query_tfidf = tfidf.transform([customer_query])
+probabilities =svm_model.predict_proba(query_tfidf)[0]
+predicted_index = probabilities.argmax()
+
+predicted_category = svm_model.classes_[predicted_index]
+model_confidence = float(probabilities[predicted_index])
+
+print("\n Traditional ML Prediction")
 print("Customer Query:",customer_query)
-print("Predicted Category:",predicted_category)
-print(f"Model Confidence:{model_confidence:.2%}")
-
+print("Predicted_category:",predicted_category)
+print(f"Model confidence:{model_confidence:.2%}")
 #================================================================================
 #confidence & escalation
 #================================================================================
@@ -64,7 +70,13 @@ Do not invent or request specific information such as order number,reference num
 
 Do not provide a delivery date, tracking status, refund, banking policy, contact method, or quarantee.
 
-Do not claim that the shipment can be checked or that any action has already been completed."""
+Do not claim that the shipment can be checked or that any action has already been completed.
+
+Understand the customer's actual banking concern using the customer query and predicted query.
+
+Provide a relevant, professional, empathetic response that directly addresses the customer's concern.
+
+Give general banking guidance where appropriate."""
 
 #=============================================================================
 #prompt engineering

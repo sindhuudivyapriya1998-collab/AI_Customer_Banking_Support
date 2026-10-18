@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 
+
 import torch 
 from torch.utils.data import Dataset
 from transformers import(AutoTokenizer,AutoModelForSequenceClassification,TrainingArguments,Trainer)
@@ -12,9 +13,9 @@ print("Libraries imported successfully")
 
 # 1.Load Data
 #===========================================================================================================================
-train_data = pd.read_csv(r"\Users\DIVYA PRIYA\Downloads\FInal_project1_AI_Banking\Data\Raw\train.csv")
+train_data = pd.read_csv("train_cleaned.csv")
 print("Train shape:",train_data.shape)
-test_data = pd.read_csv(r"\Users\DIVYA PRIYA\Downloads\FInal_project1_AI_Banking\Data\Raw\test.csv")
+test_data = pd.read_csv("test_cleaned.csv")
 print("Test shape:",test_data.shape)
 print("\nTrain columns:")
 print(train_data.columns.tolist())

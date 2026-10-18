@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer 
 from sklearn.svm import LinearSVC 
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import accuracy_score,classification_report 
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier 
@@ -13,9 +14,9 @@ from sklearn.metrics import accuracy_score, precision_score,recall_score,f1_scor
 #-----------------------------------------------------------------------------------------
 # 1. Load Data
 #-----------------------------------------------------------------------------------------
-train = pd.read_csv(r"\Users\DIVYA PRIYA\Downloads\FInal_project1_AI_Banking\Data\Raw\train.csv")
+train = pd.read_csv("train_cleaned.csv")
 print("Train shape:",train.shape)
-test = pd.read_csv(r"\Users\DIVYA PRIYA\Downloads\FInal_project1_AI_Banking\Data\Raw\test.csv")
+test = pd.read_csv("test_cleaned.csv")
 print("Test shape:",test.shape)
 #-----------------------------------------------------------------------------------------
 # 2.Basic preprocessing
@@ -26,20 +27,17 @@ test = test.dropna(subset=["text","category"]).copy()
 train["text"] = train["text"].astype(str)
 test["text"] = test["text"].astype(str)
 
-train["text"] = train["text"].str.lower()
-test["text"] = test["text"].str.lower()
+print("Missing values:",train[["text","category"]].isnull().sum())
+print("Training shape:", train.shape)
+print("Test shape:", test.shape)
 
-train["text"] = train["text"].str.replace(r"https?://\S+|www\.\S+", "",regex=True)
-test["text"] = test["text"].str.replace(r"https?://\S+|www\.\S+", "",regex=True)
-
-train["text"] = train["text"].str.replace(r"<.*?>", "",regex=True)
-test["text"] = test["text"].str.replace(r"<.*?>", "",regex=True)
-
-train["text"] = train["text"].str.replace(r"[^a-z0-9\s.,!'-]", "",regex=True)
-test["text"] = test["text"].str.replace(r"[^a-z0-9\s.,!'-]", "",regex=True)
-
-train["text"] = train["text"].str.replace(r"\s+", " ",regex=True).str.strip()
-test["text"] = test["text"].str.replace(r"\s+", " ",regex=True).str.strip()
+print("\n ================Relevant intent categories========")
+for category in train["category"].unique():
+    if any(word in category.lower()
+           for word in ["balance","account","card","payment","check","access","cash","transfer","deposit","withdrawal"]):
+        print(f"\n{category}:")
+        examples = train.loc[train["category"] ==category,"text"].head(3)
+        print(examples.tolist())
 #----------------------------------------------------------------------------------------------------
 # 3.Train/validation split
 #----------------------------------------------------------------------------------------------------
@@ -61,12 +59,17 @@ print("\nTF-IDF Validation shape:",X_val_tfidf.shape)
 #------------------------------------------------------------------------------------------------------
 # 5.Linear SVM model
 #------------------------------------------------------------------------------------------------------
-svm_model = LinearSVC(random_state=42)
+svm_model = LinearSVC(class_weight="balanced",random_state=42)
 svm_model.fit(X_train_tfidf,y_train)
 #-------------------------------------------------------------------------------------------------------
 # 6. Validation prediction
 #-------------------------------------------------------------------------------------------------------
 svm_val_pred = svm_model.predict(X_val_tfidf)
+
+print("\nAcutual categories:")
+print(y_val.head(10).tolist())
+print("\nPredicted categories:")
+print(svm_val_pred[:10].tolist())
 
 #-------------------------------------------------------------------------------------------------------
 # 7.Evaluation
@@ -108,7 +111,7 @@ xgb_f1 = f1_score(y_val_xgb,xgb_val_pred,average="weighted",zero_division=0)
 print("\n ============= XGBOOST RESULTS ==============") 
 print("Validation Accuracy:",xgb_accuracy)
 print("\n Classification Report:")
-print(classification_report(y_val_xgb,xgb_val_pred))
+print(classification_report(y_val_xgb,xgb_val_pred)) 
 
 #compare models
 #===========================================================================================================
@@ -146,12 +149,30 @@ print("weighted f1:",round(ml_results[best_ml_model],4))
 
 import joblib
 
-#save model
 joblib.dump(svm_model,"ml_baseline_model.pkl")
+
+calibrated_svm = CalibratedClassifierCV(svm_model,cv=3)
+calibrated_svm.fit(X_train_tfidf,y_train)
+joblib.dump(calibrated_svm,"calibrated_svm_model.pkl")
+print("Calibrated svm model saved successfully")
+
+
 #save TF-IDF vectorizer
 joblib.dump(tfidf,"tfidf_vectorizer.pkl") 
 
 print("Model and TF-IDF vectorizer saved successfully.") 
+
+
+print("\n============Svm test==============")
+
+test_queries = ["my card payment has been declined","i want to deactivate my account","my money isn't showing up after a bank transfer","my card isn't working at all"]
+
+for query in test_queries:
+    query_vector = tfidf.transform([query])
+    prediction = svm_model.predict(query_vector)[0]
+    print("Query:",query)
+    print("Predicted category:",prediction)
+    print("=" * 50)
 #--------------------------------------------------------------------------------------------------------
 # 8.confusion matrix
 #--------------------------------------------------------------------------------------------------------

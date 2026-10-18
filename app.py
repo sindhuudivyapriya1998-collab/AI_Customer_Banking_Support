@@ -53,7 +53,7 @@ if page=="AI Banking Customer Support":
     model_name=os.getenv("GROQ_MODEL","openai/gpt-oss-120b")
 
 #================================Load Model==============================================
-    model = joblib.load("ml_baseline_model.pkl")
+    model = joblib.load("calibrated_svm_model.pkl")
     vectorizer = joblib.load("tfidf_vectorizer.pkl")
 
 
